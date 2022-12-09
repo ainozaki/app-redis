@@ -110,6 +110,15 @@ static u16_t ip_id;
 /** The default netif used for multicast */
 static struct netif *ip4_default_multicast_netif;
 
+static inline uint64_t rdtsc(void)
+{
+	  unsigned int lo,hi;
+		__asm__ __volatile__ ("mfence");
+		__asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
+		__asm__ __volatile__ ("mfence");
+		return ((uint64_t)hi << 32) | lo;
+}
+
 /**
  * @ingroup ip4
  * Set a default netif for IPv4 multicast. */
@@ -429,6 +438,9 @@ ip4_input(struct pbuf *p, struct netif *inp)
   struct netif *netif;
   u16_t iphdr_hlen;
   u16_t iphdr_len;
+	u64_t rdtsc_start, rdtsc_end;
+
+	rdtsc_start = rdtsc();
 #if IP_ACCEPT_LINK_LAYER_ADDRESSING || LWIP_IGMP
   int check_ip_src = 1;
 #endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING || LWIP_IGMP */
@@ -692,6 +704,8 @@ ip4_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_RAW */
   {
     pbuf_remove_header(p, iphdr_hlen); /* Move to payload, no check necessary. */
+
+		rdtsc_end = rdtsc();
 
     switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP
