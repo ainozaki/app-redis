@@ -2,7 +2,7 @@
 specification: '0.5'
 name: redis
 unikraft:
-  version: stable
+  version: 0.8.0
   kconfig:
     - CONFIG_LIBUK9P=y
     - CONFIG_LIB9PFS=y
@@ -26,13 +26,13 @@ targets:
     platform: kvm
 libraries:
   musl:
-    version: stable
+    version: 0.8.0
   lwip:
-    version: stable
+    version: 0.8.0
     kconfig:
       - CONFIG_LWIP_IPV6=y
   redis:
-    version: stable
+    version: 0.8.0
     kconfig:
       - CONFIG_LIBREDIS_SERVER=y
       - CONFIG_LIBREDIS_COMMON=y
