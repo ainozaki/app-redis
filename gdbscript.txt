@@ -1,0 +1,21 @@
+set max-value-size unlimited
+set print repeats 0
+set print elements 0
+
+#ethernet
+set logging file log/ether.txt
+set logging on
+p tsc_list_ethernet
+set logging off
+
+#ip
+set logging file log/ip.txt
+set logging on
+p tsc_list_ip
+set logging off
+
+#tcp
+set logging file log/tcp.txt
+set logging on
+p tsc_list_tcp
+set logging off
