@@ -58,6 +58,7 @@
 #include "lwip/prot/iana.h"
 
 #include <string.h>
+#include <stdio.h>
 
 #ifdef LWIP_HOOK_FILENAME
 #include LWIP_HOOK_FILENAME
@@ -439,6 +440,8 @@ ip4_input(struct pbuf *p, struct netif *inp)
   u16_t iphdr_hlen;
   u16_t iphdr_len;
 	u64_t rdtsc_start, rdtsc_end;
+
+  printf("ip4_input\n");
 
 	rdtsc_start = rdtsc();
 #if IP_ACCEPT_LINK_LAYER_ADDRESSING || LWIP_IGMP

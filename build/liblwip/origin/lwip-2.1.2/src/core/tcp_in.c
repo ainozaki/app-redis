@@ -60,6 +60,7 @@
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
 
 #include <string.h>
+#include <stdio.h>
 
 #ifdef LWIP_HOOK_FILENAME
 #include LWIP_HOOK_FILENAME
@@ -117,6 +118,7 @@ static void tcp_remove_sacks_gt(struct tcp_pcb *pcb, u32_t seq);
 void
 tcp_input(struct pbuf *p, struct netif *inp)
 {
+  printf("tcp_input\n");
   struct tcp_pcb *pcb, *prev;
   struct tcp_pcb_listen *lpcb;
 #if SO_REUSE
@@ -1143,11 +1145,13 @@ tcp_receive(struct tcp_pcb *pcb)
   s16_t m;
   u32_t right_wnd_edge;
   int found_dupack = 0;
+  printf("tcp_receive\n");
 
   LWIP_ASSERT("tcp_receive: invalid pcb", pcb != NULL);
   LWIP_ASSERT("tcp_receive: wrong state", pcb->state >= ESTABLISHED);
 
   if (flags & TCP_ACK) {
+    printf("flags & TCP_ACK\n");
     right_wnd_edge = pcb->snd_wnd + pcb->snd_wl2;
 
     /* Update window. */
@@ -1371,6 +1375,7 @@ tcp_receive(struct tcp_pcb *pcb)
      (RFC 793, chapter 3.9, "SEGMENT ARRIVES" in states CLOSE-WAIT, CLOSING,
      LAST-ACK and TIME-WAIT: "Ignore the segment text.") */
   if ((tcplen > 0) && (pcb->state < CLOSE_WAIT)) {
+    printf("tcplen > 0 && state < CLOSE_WAIT\n");
     /* This code basically does three things:
 
     +) If the incoming segment contains data that is the next
