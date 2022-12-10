@@ -111,6 +111,16 @@ static u16_t ip_id;
 /** The default netif used for multicast */
 static struct netif *ip4_default_multicast_netif;
 
+static inline uint64_t rdtsc(void)
+{
+  unsigned int lo, hi;
+  __asm__ __volatile__("mfence");
+  __asm__ __volatile__("rdtsc"
+                       : "=a"(lo), "=d"(hi));
+  __asm__ __volatile__("mfence");
+  return ((uint64_t)hi << 32) | lo;
+}
+
 /**
  * @ingroup ip4
  * Set a default netif for IPv4 multicast. */
@@ -426,7 +436,6 @@ ip4_input_accept(struct netif *netif)
 err_t
 ip4_input(struct pbuf *p, struct netif *inp)
 {
-	printf("ip4_input\n");
   const struct ip_hdr *iphdr;
   struct netif *netif;
   u16_t iphdr_hlen;
@@ -437,6 +446,9 @@ ip4_input(struct pbuf *p, struct netif *inp)
 #if LWIP_RAW
   raw_input_state_t raw_status;
 #endif /* LWIP_RAW */
+  u64_t rdtsc_start, rdtsc_end;
+
+  rdtsc_start = rdtsc();
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -693,6 +705,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
   if (raw_status != RAW_INPUT_EATEN)
 #endif /* LWIP_RAW */
   {
+    rdtsc_end = rdtsc();
     pbuf_remove_header(p, iphdr_hlen); /* Move to payload, no check necessary. */
 
     switch (IPH_PROTO(iphdr)) {

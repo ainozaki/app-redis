@@ -60,6 +60,7 @@
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
 
 #include <string.h>
+#include <stdio.h>
 
 #ifdef LWIP_HOOK_FILENAME
 #include LWIP_HOOK_FILENAME
@@ -105,6 +106,16 @@ static void tcp_remove_sacks_gt(struct tcp_pcb *pcb, u32_t seq);
 #endif /* TCP_OOSEQ_BYTES_LIMIT || TCP_OOSEQ_PBUFS_LIMIT */
 #endif /* LWIP_TCP_SACK_OUT */
 
+static inline uint64_t rdtsc(void)
+{
+  unsigned int lo, hi;
+  __asm__ __volatile__("mfence");
+  __asm__ __volatile__("rdtsc"
+                       : "=a"(lo), "=d"(hi));
+  __asm__ __volatile__("mfence");
+  return ((uint64_t)hi << 32) | lo;
+}
+
 /**
  * The initial input processing of TCP. It verifies the TCP header, demultiplexes
  * the segment between the PCBs and passes it on to tcp_process(), which implements
@@ -125,6 +136,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* SO_REUSE */
   u8_t hdrlen_bytes;
   err_t err;
+  u64_t rdtsc_start, rdtsc_end;
+
+  rdtsc_start = rdtsc();
 
   LWIP_UNUSED_ARG(inp);
   LWIP_ASSERT_CORE_LOCKED();
@@ -498,6 +512,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
           }
 
           /* Notify application that data has been received. */
+          rdtsc_end = rdtsc();
           TCP_EVENT_RECV(pcb, recv_data, ERR_OK, err);
           if (err == ERR_ABRT) {
 #if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE

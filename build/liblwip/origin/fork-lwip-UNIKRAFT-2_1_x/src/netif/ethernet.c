@@ -63,6 +63,16 @@
 const struct eth_addr ethbroadcast = {{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}};
 const struct eth_addr ethzero = {{0, 0, 0, 0, 0, 0}};
 
+static inline uint64_t rdtsc(void)
+{
+  unsigned int lo, hi;
+  __asm__ __volatile__("mfence");
+  __asm__ __volatile__("rdtsc"
+                       : "=a"(lo), "=d"(hi));
+  __asm__ __volatile__("mfence");
+  return ((uint64_t)hi << 32) | lo;
+}
+
 /**
  * @ingroup lwip_nosys
  * Process received ethernet frames. Using this function instead of directly
@@ -85,6 +95,9 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #if LWIP_ARP || ETHARP_SUPPORT_VLAN || LWIP_IPV6
   u16_t next_hdr_offset = SIZEOF_ETH_HDR;
 #endif /* LWIP_ARP || ETHARP_SUPPORT_VLAN */
+  u64_t rdtsc_start, rdtsc_end;
+
+  rdtsc_start = rdtsc();
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -166,6 +179,8 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       p->flags |= PBUF_FLAG_LLBCAST;
     }
   }
+
+  rdtsc_end = rdtsc();
 
   switch (type) {
 #if LWIP_IPV4 && LWIP_ARP
