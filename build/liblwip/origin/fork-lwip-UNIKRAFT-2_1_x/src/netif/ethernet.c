@@ -181,6 +181,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   }
 
   rdtsc_end = rdtsc();
+  tsc_write(TSC_ETHERNET, rdtsc_end - rdtsc_start);
 
   switch (type) {
 #if LWIP_IPV4 && LWIP_ARP

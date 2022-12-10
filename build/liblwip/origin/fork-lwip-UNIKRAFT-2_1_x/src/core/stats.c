@@ -46,8 +46,32 @@
 #include "lwip/debug.h"
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 struct stats_ lwip_stats;
+
+#define TSC_SAMPLE_NUM 10000
+int index_ethernet = 0;
+int index_ip = 0;
+int index_tcp = 0;
+u64_t tsc_list_ethernet[TSC_SAMPLE_NUM] = {0};
+u64_t tsc_list_ip[TSC_SAMPLE_NUM] = {0};
+u64_t tsc_list_tcp[TSC_SAMPLE_NUM] = {0};
+
+void tsc_write(int type, u64_t time){
+  switch (type){
+    case TSC_ETHERNET:
+      tsc_list_ethernet[index_ethernet++ % TSC_SAMPLE_NUM] = time;
+      break;
+    case TSC_IP:
+      tsc_list_ip[index_ip++ % TSC_SAMPLE_NUM] = time;
+      break;
+    case TSC_TCP:
+      tsc_list_tcp[index_tcp++] = time;
+      break;
+  }
+}
 
 void
 stats_init(void)

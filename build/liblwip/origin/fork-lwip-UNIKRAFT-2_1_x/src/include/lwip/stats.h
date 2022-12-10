@@ -306,6 +306,11 @@ extern struct stats_ lwip_stats;
 /** Init statistics */
 void stats_init(void);
 
+#define TSC_ETHERNET 0
+#define TSC_IP 1
+#define TSC_TCP 2
+void tsc_write(int proto, u64_t value);
+
 #define STATS_INC(x) ++lwip_stats.x
 #define STATS_DEC(x) --lwip_stats.x
 #define STATS_INC_USED(x, y, type) do { lwip_stats.x.used = (type)(lwip_stats.x.used + y); \

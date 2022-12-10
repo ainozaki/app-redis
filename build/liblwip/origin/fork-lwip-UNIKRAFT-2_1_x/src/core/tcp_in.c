@@ -513,6 +513,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
           /* Notify application that data has been received. */
           rdtsc_end = rdtsc();
+          tsc_write(TSC_TCP, rdtsc_end - rdtsc_start);
           TCP_EVENT_RECV(pcb, recv_data, ERR_OK, err);
           if (err == ERR_ABRT) {
 #if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE

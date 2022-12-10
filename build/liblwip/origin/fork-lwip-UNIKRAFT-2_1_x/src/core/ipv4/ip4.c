@@ -706,6 +706,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_RAW */
   {
     rdtsc_end = rdtsc();
+    tsc_write(TSC_IP, rdtsc_end - rdtsc_start);
     pbuf_remove_header(p, iphdr_hlen); /* Move to payload, no check necessary. */
 
     switch (IPH_PROTO(iphdr)) {
