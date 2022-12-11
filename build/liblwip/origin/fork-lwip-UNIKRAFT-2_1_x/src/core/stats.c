@@ -68,7 +68,7 @@ void tsc_write(int type, u64_t time){
       tsc_list_ip[index_ip++ % TSC_SAMPLE_NUM] = time;
       break;
     case TSC_TCP:
-      tsc_list_tcp[index_tcp++] = time;
+      tsc_list_tcp[index_tcp++ % TSC_SAMPLE_NUM] = time;
       break;
   }
 }
