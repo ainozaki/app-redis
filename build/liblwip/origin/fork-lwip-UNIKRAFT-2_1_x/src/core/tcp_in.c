@@ -298,6 +298,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     /* If it did not go to an active connection, we check the connections
        in the TIME-WAIT state. */
     for (pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
+      printf("loop time-wait pcbs\n");
       LWIP_ASSERT("tcp_input: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
 
       /* check if PCB is bound to specific netif */

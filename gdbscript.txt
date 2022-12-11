@@ -3,19 +3,19 @@ set print repeats 0
 set print elements 0
 
 #ethernet
-set logging file log/3ether.txt
+set logging file log/50con-ether.txt
 set logging on
 p tsc_list_ethernet
 set logging off
 
 #ip
-set logging file log/3ip.txt
+set logging file log/50con-ip.txt
 set logging on
 p tsc_list_ip
 set logging off
 
 #tcp
-set logging file log/3tcp.txt
+set logging file log/50con-tcp.txt
 set logging on
 p tsc_list_tcp
 set logging off
