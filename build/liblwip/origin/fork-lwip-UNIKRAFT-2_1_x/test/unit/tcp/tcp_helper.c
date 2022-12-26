@@ -170,6 +170,7 @@ tcp_set_state(struct tcp_pcb* pcb, enum tcp_state state, const ip_addr_t* local_
     pcb->local_port = local_port;
   } else if(state == TIME_WAIT) {
     TCP_REG(&tcp_tw_pcbs, pcb);
+    cuckoo_hash_insert(PCB_TYPE_TIMEWAIT, pcb);
     ip_addr_copy(pcb->local_ip, *local_ip);
     pcb->local_port = local_port;
     ip_addr_copy(pcb->remote_ip, *remote_ip);

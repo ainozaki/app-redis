@@ -392,13 +392,13 @@ tcp_input(struct pbuf *p, struct netif *inp)
   if (pcb == NULL) {
     /* If it did not go to an active connection, we check the connections
        in the TIME-WAIT state. */
-    for (pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
+    if ((pcb = cuckoo_hash_search(PCB_TYPE_TIMEWAIT, ip_current_src_addr(), tcphdr->src))){
       LWIP_ASSERT("tcp_input: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
 
       /* check if PCB is bound to specific netif */
       if ((pcb->netif_idx != NETIF_NO_INDEX) &&
           (pcb->netif_idx != netif_get_index(ip_data.current_input_netif))) {
-        continue;
+        pcb = NULL;
       }
 
       if (pcb->remote_port == tcphdr->src &&
@@ -1111,6 +1111,7 @@ tcp_process(struct tcp_pcb *pcb)
           TCP_RMV_ACTIVE(pcb);
           pcb->state = TIME_WAIT;
           TCP_REG(&tcp_tw_pcbs, pcb);
+          cuckoo_hash_insert(PCB_TYPE_TIMEWAIT, pcb);
         } else {
           tcp_ack_now(pcb);
           pcb->state = CLOSING;
@@ -1129,6 +1130,7 @@ tcp_process(struct tcp_pcb *pcb)
         TCP_RMV_ACTIVE(pcb);
         pcb->state = TIME_WAIT;
         TCP_REG(&tcp_tw_pcbs, pcb);
+        cuckoo_hash_insert(PCB_TYPE_TIMEWAIT, pcb);
       }
       break;
     case CLOSING:
@@ -1139,6 +1141,7 @@ tcp_process(struct tcp_pcb *pcb)
         TCP_RMV_ACTIVE(pcb);
         pcb->state = TIME_WAIT;
         TCP_REG(&tcp_tw_pcbs, pcb);
+        cuckoo_hash_insert(PCB_TYPE_TIMEWAIT, pcb);
       }
       break;
     case LAST_ACK:

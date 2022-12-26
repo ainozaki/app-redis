@@ -580,6 +580,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
      the PCB with a NULL argument, and send an RST to the remote end. */
   if (pcb->state == TIME_WAIT) {
     tcp_pcb_remove(&tcp_tw_pcbs, pcb);
+    cuckoo_hash_delete(PCB_TYPE_TIMEWAIT, pcb);
     tcp_free(pcb);
   } else {
     int send_rst = 0;
@@ -1452,6 +1453,7 @@ tcp_slowtmr_start:
     if (pcb_remove) {
       struct tcp_pcb *pcb2;
       tcp_pcb_purge(pcb);
+      cuckoo_hash_delete(PCB_TYPE_TIMEWAIT, pcb);
       /* Remove PCB from tcp_tw_pcbs list. */
       if (prev != NULL) {
         LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_tw_pcbs", pcb != tcp_tw_pcbs);
