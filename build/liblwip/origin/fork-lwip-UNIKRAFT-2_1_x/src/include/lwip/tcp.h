@@ -491,8 +491,11 @@ void tcp_ext_arg_set(struct tcp_pcb *pcb, uint8_t id, void *arg);
 void *tcp_ext_arg_get(const struct tcp_pcb *pcb, uint8_t id);
 #endif
 
-void active_cuckoo_hash_delete(struct tcp_pcb *pcb);
-void active_cuckoo_hash_insert(struct tcp_pcb *pcb);
+#define PCB_TYPE_ACTIVE 0
+#define PCB_TYPE_TIMEWAIT 1
+#define PCB_TYPE_KEEP 2
+void cuckoo_hash_delete(int pcb_type, struct tcp_pcb *pcb);
+void cuckoo_hash_insert(int pcb_type, struct tcp_pcb *pcb);
 
 #ifdef __cplusplus
 }
