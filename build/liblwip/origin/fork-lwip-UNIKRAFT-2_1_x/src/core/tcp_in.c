@@ -116,8 +116,8 @@ static inline uint64_t rdtsc(void)
   return ((uint64_t)hi << 32) | lo;
 }
 
-struct tcp_pcb *cuckoo_hash_t1[3][10000] = {0};
-struct tcp_pcb *cuckoo_hash_t2[3][10000] = {0};
+struct tcp_pcb *cuckoo_hash_t1[2][10000] = {0};
+struct tcp_pcb *cuckoo_hash_t2[2][10000] = {0};
 
 static int cuckoo_hash_1(ip_addr_t *remote_ip, u16_t remote_port)
 {
@@ -400,25 +400,19 @@ tcp_input(struct pbuf *p, struct netif *inp)
           (pcb->netif_idx != netif_get_index(ip_data.current_input_netif))) {
         pcb = NULL;
       }
-
-      if (pcb->remote_port == tcphdr->src &&
-          pcb->local_port == tcphdr->dest &&
-          ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()) &&
-          ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr())) {
-        /* We don't really care enough to move this PCB to the front
-           of the list since we are not very likely to receive that
-           many segments for connections in TIME-WAIT. */
-        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for TIME_WAITing connection.\n"));
+      /* We don't really care enough to move this PCB to the front
+        of the list since we are not very likely to receive that
+        many segments for connections in TIME-WAIT. */
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for TIME_WAITing connection.\n"));
 #ifdef LWIP_HOOK_TCP_INPACKET_PCB
-        if (LWIP_HOOK_TCP_INPACKET_PCB(pcb, tcphdr, tcphdr_optlen, tcphdr_opt1len,
+      if (LWIP_HOOK_TCP_INPACKET_PCB(pcb, tcphdr, tcphdr_optlen, tcphdr_opt1len,
                                        tcphdr_opt2, p) == ERR_OK)
 #endif
-        {
-          tcp_timewait_input(pcb);
-        }
-        pbuf_free(p);
-        return;
+      {
+        tcp_timewait_input(pcb);
       }
+      pbuf_free(p);
+      return;
     }
 
     /* Finally, if we still did not get a match, we check all PCBs that
