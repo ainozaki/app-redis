@@ -420,7 +420,7 @@ extern struct tcp_pcb ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
 #define TCP_REG_ACTIVE(npcb)                       \
   do {                                             \
     TCP_REG(&tcp_active_pcbs, npcb);               \
-    tw_cuckoo_hash_insert(npcb); \
+    active_cuckoo_hash_insert(npcb); \
     tcp_active_pcbs_changed = 1;                   \
   } while (0)
 

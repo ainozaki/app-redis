@@ -1394,7 +1394,7 @@ tcp_slowtmr_start:
         LWIP_ASSERT("tcp_slowtmr: first pcb == tcp_active_pcbs", tcp_active_pcbs == pcb);
         tcp_active_pcbs = pcb->next;
       }
-      tw_cuckoo_hash_delete(pcb);
+      active_cuckoo_hash_delete(pcb);
 
       if (pcb_reset) {
         tcp_rst(pcb, pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,

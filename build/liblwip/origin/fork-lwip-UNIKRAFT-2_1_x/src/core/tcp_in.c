@@ -116,8 +116,8 @@ static inline uint64_t rdtsc(void)
   return ((uint64_t)hi << 32) | lo;
 }
 
-struct tcp_pcb *tw_cuckoo_hash_t1[10000] = {0};
-struct tcp_pcb *tw_cuckoo_hash_t2[10000] = {0};
+struct tcp_pcb *active_cuckoo_hash_t1[10000] = {0};
+struct tcp_pcb *active_cuckoo_hash_t2[10000] = {0};
 
 static int cuckoo_hash_1(ip_addr_t *remote_ip, u16_t remote_port)
 {
@@ -128,14 +128,14 @@ static int cuckoo_hash_2(ip_addr_t *remote_ip, u16_t remote_port)
   return (*(u32_t *)remote_ip + remote_port) % 10000 + 5000;
 }
 
-static struct tcp_pcb *tw_cuckoo_hash_search(ip_addr_t *remote_ip, u16_t remote_port)
+static struct tcp_pcb *active_cuckoo_hash_search(ip_addr_t *remote_ip, u16_t remote_port)
 {
   int index;
   struct tcp_pcb *pcb;
 
   // check table 1
   index = cuckoo_hash_1(remote_ip, remote_port);
-  pcb = tw_cuckoo_hash_t1[index];
+  pcb = active_cuckoo_hash_t1[index];
   if (pcb && (pcb->remote_port == remote_port) && ip_addr_cmp(&(pcb->remote_ip), remote_ip))
   {
     return pcb;
@@ -143,7 +143,7 @@ static struct tcp_pcb *tw_cuckoo_hash_search(ip_addr_t *remote_ip, u16_t remote_
 
   // check table 2
   index = cuckoo_hash_2(remote_ip, remote_port);
-  pcb = tw_cuckoo_hash_t2[index];
+  pcb = active_cuckoo_hash_t2[index];
   if (pcb && (pcb->remote_port == remote_port) && ip_addr_cmp(&(pcb->remote_ip), remote_ip))
   {
     return pcb;
@@ -153,13 +153,13 @@ static struct tcp_pcb *tw_cuckoo_hash_search(ip_addr_t *remote_ip, u16_t remote_
   return NULL;
 }
 
-void tw_cuckoo_hash_insert(struct tcp_pcb *pcb)
+void active_cuckoo_hash_insert(struct tcp_pcb *pcb)
 {
   int i = 0, index;
   struct tcp_pcb *insert_pcb = pcb, *tmp;
 
   // Already exist
-  if (tw_cuckoo_hash_search(&pcb->remote_ip, pcb->remote_port))
+  if (active_cuckoo_hash_search(&pcb->remote_ip, pcb->remote_port))
   {
     return;
   }
@@ -168,48 +168,48 @@ void tw_cuckoo_hash_insert(struct tcp_pcb *pcb)
   {
     // check table 1
     index = cuckoo_hash_1(&insert_pcb->remote_ip, insert_pcb->remote_port);
-    if (!tw_cuckoo_hash_t1[index])
+    if (!active_cuckoo_hash_t1[index])
     {
-      tw_cuckoo_hash_t1[index] = insert_pcb;
+      active_cuckoo_hash_t1[index] = insert_pcb;
       return;
     }
     tmp = insert_pcb;
-    insert_pcb = tw_cuckoo_hash_t1[index];
-    tw_cuckoo_hash_t1[index] = tmp;
+    insert_pcb = active_cuckoo_hash_t1[index];
+    active_cuckoo_hash_t1[index] = tmp;
 
     // check table 2
     index = cuckoo_hash_2(&pcb->remote_ip, pcb->remote_port);
-    if (!tw_cuckoo_hash_t2[index])
+    if (!active_cuckoo_hash_t2[index])
     {
-      tw_cuckoo_hash_t2[index] = pcb;
+      active_cuckoo_hash_t2[index] = pcb;
       return;
     }
     tmp = insert_pcb;
-    insert_pcb = tw_cuckoo_hash_t2[index];
-    tw_cuckoo_hash_t2[index] = tmp;
+    insert_pcb = active_cuckoo_hash_t2[index];
+    active_cuckoo_hash_t2[index] = tmp;
   }
 }
 
-void tw_cuckoo_hash_delete(struct tcp_pcb *pcb)
+void active_cuckoo_hash_delete(struct tcp_pcb *pcb)
 {
   int index;
   struct tcp_pcb *tmp;
 
   // check table 1
   index = cuckoo_hash_1(&pcb->remote_ip, pcb->remote_port);
-  tmp = tw_cuckoo_hash_t1[index];
+  tmp = active_cuckoo_hash_t1[index];
   if (tmp && (tmp->remote_port == pcb->remote_port) && ip_addr_cmp(&tmp->remote_ip, &pcb->remote_ip))
   {
-    tw_cuckoo_hash_t1[index] = NULL;
+    active_cuckoo_hash_t1[index] = NULL;
     return;
   }
 
   // check table 2
   index = cuckoo_hash_2(&pcb->remote_ip, pcb->remote_port);
-  tmp = tw_cuckoo_hash_t2[index];
+  tmp = active_cuckoo_hash_t2[index];
   if (tmp && (tmp->remote_port == pcb->remote_port) && ip_addr_cmp(&tmp->remote_ip, &pcb->remote_ip))
   {
-    tw_cuckoo_hash_t2[index] = NULL;
+    active_cuckoo_hash_t2[index] = NULL;
     return;
   }
 
@@ -362,7 +362,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
      for an active connection. */
   prev = NULL;
 
-  if ((pcb = tw_cuckoo_hash_search(ip_current_src_addr(), tcphdr->src))){
+  if ((pcb = active_cuckoo_hash_search(ip_current_src_addr(), tcphdr->src))){
     LWIP_ASSERT("tcp_input: active pcb->state != CLOSED", pcb->state != CLOSED);
     LWIP_ASSERT("tcp_input: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
     LWIP_ASSERT("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
@@ -555,7 +555,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
            deallocate the PCB. */
         TCP_EVENT_ERR(pcb->state, pcb->errf, pcb->callback_arg, ERR_RST);
         tcp_pcb_remove(&tcp_active_pcbs, pcb);
-        tw_cuckoo_hash_delete(pcb);
+        active_cuckoo_hash_delete(pcb);
         tcp_free(pcb);
       } else {
         err = ERR_OK;
@@ -723,7 +723,7 @@ tcp_input_delayed_close(struct tcp_pcb *pcb)
       TCP_EVENT_ERR(pcb->state, pcb->errf, pcb->callback_arg, ERR_CLSD);
     }
     tcp_pcb_remove(&tcp_active_pcbs, pcb);
-    tw_cuckoo_hash_delete(pcb);
+    active_cuckoo_hash_delete(pcb);
     tcp_free(pcb);
     return 1;
   }
